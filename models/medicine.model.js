@@ -6,6 +6,10 @@ const expiryRecordScehma = Schema(
       type: Number,
       required: true,
     },
+    batchNumber: {
+      type: Number,
+      required: true,
+    },
     expiryDate: {
       type: Date,
       required: true,
@@ -13,6 +17,10 @@ const expiryRecordScehma = Schema(
     updatedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
+    },
+    updatedOn: {
+      type: Date,
+      required: true,
     },
   },
   { timestamps: true }
@@ -41,6 +49,11 @@ const medicineSchema = Schema(
     },
     description: {
       type: String,
+    },
+    type: {
+      type: String,
+      enum: ["Tablet", "Capsule", "Syrup"],
+      default: "Tablet",
     },
   },
   { timestamps: true }
