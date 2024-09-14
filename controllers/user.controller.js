@@ -49,7 +49,6 @@ const registerController = asyncHandler(async (req, res) => {
     email,
   });
 
-  // if user creation failed
   if (!currentUser) {
     throw new customApiError(
       500,
@@ -92,7 +91,6 @@ const loginController = asyncHandler(async (req, res) => {
   } else {
     const { accessToken, refreshToken } =
       await generateAccessandRefreshToken(currentUser);
-    console.log(accessToken);
     console.log(currentUser, "currentUser");
 
     res
@@ -134,4 +132,32 @@ const logoutController = asyncHandler(async (req, res) => {
     .json(new customApiResponse(200, {}, "Logout successful!"));
 });
 
-export { loginController, registerController, logoutController };
+const updatePasswordController = asyncHandler(async (req, res) => {
+  const { newPassword, oldPassword } = req.body;
+  if (!newPassword || !oldPassword) {
+    throw new customApiError(
+      400,
+      "Please enter your oldPassword and newPassword"
+    );
+  }
+  const userId = req.user.userId;
+  const currentUser = await User.findOne({ _id: userId });
+
+  const isPasswordCorrect = await currentUser.verifyPassword(oldPassword);
+  if (!isPasswordCorrect) {
+    throw new customApiError(400, "Please enter correct password");
+  } else {
+    currentUser.password = newPassword;
+    await currentUser.save({ validateBeforeSave: false });
+    res
+      .status(200)
+      .json(new customApiResponse(200, {}, "Password updated successfully"));
+  }
+});
+
+export {
+  loginController,
+  registerController,
+  logoutController,
+  updatePasswordController,
+};

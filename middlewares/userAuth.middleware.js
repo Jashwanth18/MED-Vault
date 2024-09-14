@@ -23,7 +23,10 @@ export const verifyAccessToken = asyncHandler(async (req, res, next) => {
   const decodedToken = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
   const userId = decodedToken?._id;
   if (!userId) {
-    throw new customApiError(400, "You are not authorized to visit this page");
+    throw new customApiError(
+      400,
+      "You are not authorized to visit this page. Missing userid"
+    );
   }
   const user = await User.findById(userId);
   if (!user) {
