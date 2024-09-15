@@ -70,11 +70,6 @@ const registerController = asyncHandler(async (req, res) => {
 });
 
 const loginController = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    throw new customApiError(400, "Email and password are required");
-  }
-
   const currentUser = await User.findOne({ email });
 
   if (!currentUser) {
@@ -155,9 +150,48 @@ const updatePasswordController = asyncHandler(async (req, res) => {
   }
 });
 
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken) {
+    throw new customApiError(400, "Invalid refresh token. Please login again");
+  }
+
+  const decodedToken = jwt.verify(
+    refreshToken,
+    process.env.REFRESH_TOKEN_SECRET
+  );
+
+  const userId = decodedToken?._id;
+  if (!userId) {
+    throw new customApiError(400, "Invalid token. Please login again");
+  }
+
+  const currentUser = await User.findOne({ _id: userId });
+  if (!currentUser) {
+    throw new customApiError(400, "User not found. Please login again");
+  }
+
+  if (currentUser.refreshToken !== refreshToken) {
+    throw new customApiError(400, "Invalid refresh token. Please login again.");
+  }
+
+  const { newRefreshToken, newAccessToken } =
+    await currentUser.generateAccessandRefreshToken();
+
+  res.clearCookie("accessToken", cookieOptions);
+  res.clearCookie("refreshToken", cookieOptions);
+  res
+    .status(200)
+    .cookie("accessToken", newAccessToken, cookieOptions)
+    .cookie("refreshToken", newRefreshToken, cookieOptions)
+    .json(new customApiResponse(200, "Access token refreshed successfully!"));
+});
+
 export {
   loginController,
   registerController,
   logoutController,
   updatePasswordController,
+  refreshAccessToken,
 };
