@@ -32,6 +32,7 @@ const medicineSchema = Schema(
   {
     name: {
       type: String,
+      unique: true,
       required: true,
       index: true,
       trim: true,
@@ -54,6 +55,10 @@ const medicineSchema = Schema(
       type: String,
       enum: ["Tablet", "Capsule", "Syrup"],
       default: "Tablet",
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   { timestamps: true }

@@ -20,4 +20,8 @@ import userRouter from "../routes/user.routes.js";
 
 app.use(`${API_BASE_URL}/user`, userRouter);
 
+import medicineRouter from "../routes/medicine.routes.js";
+
+app.use(`${API_BASE_URL}/medicines`, medicineRouter);
+
 export { app };

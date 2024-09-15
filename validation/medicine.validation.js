@@ -19,4 +19,4 @@ const medicineValidationSchema = Joi.object({
     }),
 });
 
-module.exports = { medicineValidationSchema };
+export default medicineValidationSchema;
