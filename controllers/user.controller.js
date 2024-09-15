@@ -70,6 +70,7 @@ const registerController = asyncHandler(async (req, res) => {
 });
 
 const loginController = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
   const currentUser = await User.findOne({ email });
 
   if (!currentUser) {
@@ -185,7 +186,17 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     .status(200)
     .cookie("accessToken", newAccessToken, cookieOptions)
     .cookie("refreshToken", newRefreshToken, cookieOptions)
-    .json(new customApiResponse(200, "Access token refreshed successfully!"));
+    .json(
+      new customApiResponse(
+        200,
+        {
+          userId,
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken,
+        },
+        "Access token refreshed successfully!"
+      )
+    );
 });
 
 export {
