@@ -1,23 +1,25 @@
 import { Router } from "express";
 import { validateMedicine } from "../middlewares/validation.middleware.js";
-import { createMedicine } from "../controllers/medicine.controller.js";
+import { createMedicine, getMedicineById, getAllMedicines, deleteMedicineById, updateMedicineById } from "../controllers/medicine.controller.js";
 import { isAdmin } from "../middlewares/adminAuth.middleware.js";
 import { verifyAccessToken } from "../middlewares/userAuth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
-// router
-//     .route("/")
-//     .get(isAdmin, getMedicines);
+router
+    .route("/")
+    .get(verifyAccessToken, getAllMedicines);
 
 router
     .route("/new-med")
-    .post(verifyAccessToken,isAdmin, validateMedicine, createMedicine);
+    .post( upload.single("displayImage"), verifyAccessToken, isAdmin, validateMedicine, createMedicine);
 
-// router
-//     .route("/:id")
-//     .patch(isAdmin, updateMedicine)
-//     .delete(isAdmin, deleteMedicine);
+router
+     .route("/:id")
+     .get(verifyAccessToken, getMedicineById)
+     .put(verifyAccessToken, isAdmin, updateMedicineById)
+     .delete(verifyAccessToken, isAdmin, deleteMedicineById);
 
 
 

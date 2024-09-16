@@ -2,9 +2,15 @@ import mongoose, { Schema } from "mongoose";
 
 const expiryRecordScehma = Schema(
   {
+    medicineId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     quantity: {
       type: Number,
       required: true,
+      min: 0,
     },
     batchNumber: {
       type: Number,
@@ -26,7 +32,7 @@ const expiryRecordScehma = Schema(
   { timestamps: true }
 );
 
-const ExpiryRecord = mongoose.model("ExpiryRecord", expiryRecordScehma);
+export const ExpiryRecord = mongoose.model("ExpiryRecord", expiryRecordScehma);
 
 const medicineSchema = Schema(
   {
@@ -63,5 +69,17 @@ const medicineSchema = Schema(
   },
   { timestamps: true }
 );
+
+medicineSchema.post("findByIdAndDelete", async function (medicine) {
+  if (medicine) {
+    try {
+      await ExpiryRecord.deleteMany({
+        _id: { $in: medicine.stockInfo },
+      });
+    } catch (error) {
+      console.log("Error deleting associated Expiry records:", error);
+    }
+  }
+});
 
 export const Medicine = mongoose.model("Medicine", medicineSchema);
