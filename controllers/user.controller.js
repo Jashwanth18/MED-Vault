@@ -87,7 +87,6 @@ const loginController = asyncHandler(async (req, res) => {
   } else {
     const { accessToken, refreshToken } =
       await generateAccessandRefreshToken(currentUser);
-    console.log(currentUser, "currentUser");
 
     res
       .status(200)
