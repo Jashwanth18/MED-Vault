@@ -38,12 +38,10 @@ const medicineSchema = Schema(
 
 medicineSchema.post("findOneAndDelete", async function (doc) {
   if (doc) {
-    console.log(doc);
     try {
       await ExpiryRecord.deleteMany({
         _id: { $in: doc.stockInfo },
       });
-      console.log("DELETED");
     } catch (error) {
       console.log("Error deleting associated Expiry records:", error);
     }
