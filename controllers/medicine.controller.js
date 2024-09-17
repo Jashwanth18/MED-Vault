@@ -1,4 +1,5 @@
-import { ExpiryRecord, Medicine } from "../models/medicine.model.js";
+import { Medicine } from "../models/medicine.model.js";
+import { ExpiryRecord } from "../models/expiryrecord.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { customApiResponse } from "../utils/customApiResponse.js";
 import { uploadFile } from "../utils/cloudinary.js";
@@ -26,19 +27,11 @@ const createMedicine = asyncHandler(async (req, res) => {
     createdBy: req.user.userId,
   });
 
-  res.status(201).json(
-    new customApiResponse(
-      201,
-      {
-        name: newMedicine.name,
-        description: newMedicine.description,
-        displayImage: newMedicine.displayImage,
-        type: newMedicine.type,
-        createdBy: newMedicine.createdBy,
-      },
-      "Medicine Added succssfully"
-    )
-  );
+  res
+    .status(201)
+    .json(
+      new customApiResponse(201, newMedicine, "Medicine Added succssfully")
+    );
 });
 
 const getMedicineById = asyncHandler(async (req, res) => {
@@ -46,7 +39,7 @@ const getMedicineById = asyncHandler(async (req, res) => {
 
   const medicine = await Medicine.findById(medId);
   if (!medicine) {
-    throw new customApiError("Medicine not found");
+    throw new customApiError(404, "Medicine not found");
   }
 
   res
@@ -104,13 +97,50 @@ const deleteMedicineById = asyncHandler(async (req, res) => {
     .json(new customApiResponse(200, {}, "Medicine deleted successfully"));
 });
 
+const createExpiryRecord = asyncHandler(async (req, res) => {
+  const recordData = req.body;
+  const medId = req.params.medId;
+
+  const createdExpiryRecord = await ExpiryRecord.create({
+    ...recordData,
+    medicineId: medId,
+    updatedBy: req.user.userId,
+  });
+
+  const expiryRecordId = createdExpiryRecord._id;
+  const updatedMedicine = await Medicine.findByIdAndUpdate(
+    medId,
+    {
+      $addToSet: { stockInfo: expiryRecordId },
+    },
+    { new: true, runValidators: true }
+  );
+  if (!updatedMedicine) {
+    res
+      .status(404)
+      .json(
+        new customApiResponse(404, {}, "Medicine with this ID doesnt exist.")
+      );
+  }
+
+  res
+    .status(200)
+    .json(
+      new customApiResponse(
+        200,
+        createdExpiryRecord,
+        "Successfully added the expiry record!"
+      )
+    );
+});
+
 const updateExpiryRecordById = asyncHandler(async (req, res) => {
   const recordId = req.params.recordId;
   const updatedData = req.body;
 
-  const updatedExpiryRecord = ExpiryRecord.findByIdAndUpdate(
+  const updatedExpiryRecord = await ExpiryRecord.findByIdAndUpdate(
     recordId,
-    updatedData,
+    { ...updatedData, updatedBy: req.user.userId },
     { new: true, runValidators: true }
   );
 
@@ -173,4 +203,5 @@ export {
   deleteMedicineById,
   updateExpiryRecordById,
   deleteExpiryRecordById,
+  createExpiryRecord,
 };
