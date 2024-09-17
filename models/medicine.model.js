@@ -1,38 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-
-const expiryRecordScehma = Schema(
-  {
-    medicineId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    quantity: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    batchNumber: {
-      type: Number,
-      required: true,
-    },
-    expiryDate: {
-      type: Date,
-      required: true,
-    },
-    updatedBy: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-    },
-    updatedOn: {
-      type: Date,
-      required: true,
-    },
-  },
-  { timestamps: true }
-);
-
-export const ExpiryRecord = mongoose.model("ExpiryRecord", expiryRecordScehma);
+import { ExpiryRecord } from "./expiryrecord.model.js";
 
 const medicineSchema = Schema(
   {
@@ -52,7 +19,6 @@ const medicineSchema = Schema(
     displayImage: {
       type: String,
       required: true,
-      //TODO: ADD default dp url
     },
     description: {
       type: String,
@@ -70,12 +36,14 @@ const medicineSchema = Schema(
   { timestamps: true }
 );
 
-medicineSchema.post("findByIdAndDelete", async function (medicine) {
-  if (medicine) {
+medicineSchema.post("findOneAndDelete", async function (doc) {
+  if (doc) {
+    console.log(doc);
     try {
       await ExpiryRecord.deleteMany({
-        _id: { $in: medicine.stockInfo },
+        _id: { $in: doc.stockInfo },
       });
+      console.log("DELETED");
     } catch (error) {
       console.log("Error deleting associated Expiry records:", error);
     }
