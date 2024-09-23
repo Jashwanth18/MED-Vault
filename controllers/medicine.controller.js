@@ -5,6 +5,7 @@ import { customApiResponse } from "../utils/customApiResponse.js";
 import { uploadFile } from "../utils/cloudinary.js";
 import { DEFAULT_IMAGE_URL } from "../src/constants.js";
 import { customApiError } from "../utils/customApiError.js";
+import { InventoryLog } from "../models/inventorylog.model.js";
 
 const createMedicine = asyncHandler(async (req, res) => {
   const { name, description, type } = req.body;
@@ -84,7 +85,9 @@ const updateMedicineById = asyncHandler(async (req, res) => {
 const deleteMedicineById = asyncHandler(async (req, res) => {
   const medId = req.params.id;
 
-  const deletedMedicine = await Medicine.findByIdAndDelete(medId);
+  const deletedMedicine = await Medicine.findByIdAndDelete(medId, {
+    context: { user: req.user },
+  });
   if (!deletedMedicine) {
     res
       .status(404)
@@ -116,13 +119,18 @@ const createExpiryRecord = asyncHandler(async (req, res) => {
     { new: true, runValidators: true }
   );
   if (!updatedMedicine) {
+    await ExpiryRecord.findByIdAndDelete(createExpiryRecord._id);
     res
       .status(404)
       .json(
         new customApiResponse(404, {}, "Medicine with this ID doesnt exist.")
       );
   }
-
+  const inventorylog = await InventoryLog.create({
+    ...recordData,
+    updatedBy: req.user.userId,
+    medicineId: medId,
+  });
   res
     .status(200)
     .json(
@@ -136,7 +144,16 @@ const createExpiryRecord = asyncHandler(async (req, res) => {
 
 const updateExpiryRecordById = asyncHandler(async (req, res) => {
   const recordId = req.params.recordId;
+  const medId = req.params.medId;
   const updatedData = req.body;
+
+  const oldExpiryRecord = await ExpiryRecord.findById(recordId)
+    .select("quantity")
+    .lean()
+    .exec();
+  if (!oldExpiryRecord) {
+    throw new customApiError(404, "Expiry record with this ID doesn't exist");
+  }
 
   const updatedExpiryRecord = await ExpiryRecord.findByIdAndUpdate(
     recordId,
@@ -145,15 +162,26 @@ const updateExpiryRecordById = asyncHandler(async (req, res) => {
   );
 
   if (!updateExpiryRecordById) {
-    throw new customApiError(404, "Expiry record with this ID doesn't exits");
+    throw new customApiError(404, "Expiry record with this ID doesn't exist");
   }
 
+  const quantityChange =
+    updatedExpiryRecord.quantity - oldExpiryRecord.quantity;
+  if (quantityChange !== 0) {
+    const inventorylog = await InventoryLog.create({
+      medicineId: medId,
+      updatedBy: req.user.userId,
+      batchNumber: updatedExpiryRecord.batchNumber,
+      expiryDate: updatedExpiryRecord.expiryDate,
+      quantity: quantityChange,
+    });
+  }
   res
     .status(200)
     .json(
       new customApiResponse(
         200,
-        updatedExpiryRecord,
+        { ...updatedExpiryRecord._doc, quantityChange },
         "Expiry record updated successfully!"
       )
     );
@@ -176,6 +204,7 @@ const deleteExpiryRecordById = asyncHandler(async (req, res) => {
   }
 
   const deletedExpiryRecord = await ExpiryRecord.findByIdAndDelete(recordId);
+
   if (!deletedExpiryRecord) {
     res
       .status(404)
@@ -188,10 +217,21 @@ const deleteExpiryRecordById = asyncHandler(async (req, res) => {
       );
   }
 
+  const inventorylog = await InventoryLog.create({
+    medicineId: medId,
+    updatedBy: req.user.userId,
+    batchNumber: deletedExpiryRecord.batchNumber,
+    expiryDate: deletedExpiryRecord.expiryDate,
+    quantity: -1 * deletedExpiryRecord.quantity,
+  });
   res
     .status(200)
     .json(
-      new customApiResponse(200, {}, "Expiry record deleted successfully!")
+      new customApiResponse(
+        200,
+        inventorylog,
+        "Expiry record deleted successfully!"
+      )
     );
 });
 
