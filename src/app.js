@@ -24,4 +24,8 @@ import medicineRouter from "../routes/medicine.routes.js";
 
 app.use(`${API_BASE_URL}/medicines`, medicineRouter);
 
+import inventoryHistoryRouter from "../routes/inventoryhistory.routes.js";
+
+app.use(`${API_BASE_URL}/inventory`, inventoryHistoryRouter);
+
 export { app };
