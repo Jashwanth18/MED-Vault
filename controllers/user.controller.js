@@ -4,6 +4,7 @@ import { customApiError } from "../utils/customApiError.js";
 import { customApiResponse } from "../utils/customApiResponse.js";
 
 const cookieOptions = {
+  domain: "localhost",
   httpOnly: true,
   secure: true,
 };
@@ -56,17 +57,25 @@ const registerController = asyncHandler(async (req, res) => {
     );
   }
 
-  res.status(201).json(
-    new customApiResponse(
-      201,
-      {
-        userName: currentUser.userName,
-        fullName: currentUser.fullName,
-        email: currentUser.email,
-      },
-      "User registered successfully!"
-    )
-  );
+  const { accessToken, refreshToken } =
+    await generateAccessandRefreshToken(currentUser);
+  res
+    .status(201)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(
+      new customApiResponse(
+        201,
+        {
+          userName: currentUser.userName,
+          fullName: currentUser.fullName,
+          email: currentUser.email,
+          accessToken,
+          refreshToken,
+        },
+        "User registered successfully!"
+      )
+    );
 });
 
 const loginController = asyncHandler(async (req, res) => {
@@ -77,16 +86,15 @@ const loginController = asyncHandler(async (req, res) => {
     throw new customApiError(401, "User with this email doesn't exist");
   }
 
-  if (currentUser.refreshToken) {
-    throw new customApiError(400, "You are already loggedin!");
-  }
-
   const isPasswordCorrect = await currentUser.verifyPassword(password);
   if (!isPasswordCorrect) {
     throw new customApiError(401, "Password incorrect!");
   } else {
     const { accessToken, refreshToken } =
       await generateAccessandRefreshToken(currentUser);
+
+    currentUser.refreshToken = refreshToken;
+    await currentUser.save();
 
     res
       .status(200)
@@ -98,6 +106,7 @@ const loginController = asyncHandler(async (req, res) => {
           {
             userName: currentUser.userName,
             email: currentUser.email,
+            isAdmin: currentUser.isAdmin,
             accessToken,
             refreshToken,
           },
@@ -119,6 +128,10 @@ const logoutController = asyncHandler(async (req, res) => {
     },
     { new: true }
   );
+
+  if (!user) {
+    throw new customApiError(400, "Invalid token!");
+  }
 
   res
     .status(200)
