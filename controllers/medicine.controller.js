@@ -37,8 +37,14 @@ const createMedicine = asyncHandler(async (req, res) => {
 
 const getMedicineById = asyncHandler(async (req, res) => {
   const medId = req.params.id;
+  const medicine = await Medicine.findById(medId).populate({
+    path: "stockInfo",
+    populate: {
+      path: "updatedBy",
+      select: "userName -_id",
+    },
+  });
 
-  const medicine = await Medicine.findById(medId);
   if (!medicine) {
     throw new customApiError(404, "Medicine not found");
   }
@@ -51,10 +57,10 @@ const getMedicineById = asyncHandler(async (req, res) => {
 });
 
 const getAllMedicines = asyncHandler(async (req, res) => {
-  const { name, type } = req.query;
+  const { search, type } = req.query;
   let searchQuery = {};
-  if (name) {
-    searchQuery.name = { $regex: name, $options: "i" };
+  if (search) {
+    searchQuery.name = { $regex: search, $options: "i" };
   }
   if (type) {
     searchQuery.type = type;
