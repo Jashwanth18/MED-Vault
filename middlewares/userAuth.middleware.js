@@ -7,7 +7,7 @@ export const verifyAccessToken = asyncHandler(async (req, res, next) => {
   const accessTokenFromCookies = req.cookies?.accessToken;
 
   const authHeader =
-    req.headers["authorization"] || req.headers["Authorization"]; // Handle different cases
+    req.headers["authorization"] || req.headers["Authorization"];
   const accessTokenFromHeader = authHeader?.startsWith("Bearer ")
     ? authHeader.replace("Bearer ", "")
     : "";
