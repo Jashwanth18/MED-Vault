@@ -48,7 +48,7 @@ const getInventoryLogHistory = asyncHandler(async (req, res) => {
       select: "userName -_id",
     },
   ]);
-
+  inventoryHistory.reverse();
   res
     .status(200)
     .json(
