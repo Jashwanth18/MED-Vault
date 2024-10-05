@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { errorHandler } from "../utils/errorHandler.js";
 import { API_BASE_URL } from "./constants.js";
 const app = express();
 
@@ -27,5 +28,7 @@ app.use(`${API_BASE_URL}/medicines`, medicineRouter);
 import inventoryHistoryRouter from "../routes/inventoryhistory.routes.js";
 
 app.use(`${API_BASE_URL}/inventory`, inventoryHistoryRouter);
+
+app.use(errorHandler);
 
 export { app };
