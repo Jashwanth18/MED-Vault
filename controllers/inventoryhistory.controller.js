@@ -37,7 +37,7 @@ const getInventoryLogHistory = asyncHandler(async (req, res) => {
       $in: searchQuery.medicineId.map((med) => med._id),
     };
   }
-  console.log(searchQuery);
+
   const inventoryHistory = await InventoryLog.find(searchQuery).populate([
     {
       path: "medicineId",
