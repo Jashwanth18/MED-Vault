@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validateMedicine } from "../middlewares/validation.middleware.js";
-import { createMedicine, getMedicineById, getAllMedicines, deleteMedicineById, updateMedicineById, deleteExpiryRecordById, createExpiryRecord, updateExpiryRecordById } from "../controllers/medicine.controller.js";
+import { createMedicine, getMedicineById, getAllMedicines, deleteMedicineById, updateMedicineById, deleteExpiryRecordById, createExpiryRecord, updateExpiryRecordById, getStockInfo } from "../controllers/medicine.controller.js";
 import { isAdmin } from "../middlewares/adminAuth.middleware.js";
 import { verifyAccessToken } from "../middlewares/userAuth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -20,6 +20,10 @@ router
     .get(verifyAccessToken, getMedicineById)
     .put(verifyAccessToken, isAdmin, updateMedicineById)
     .delete(verifyAccessToken, isAdmin, deleteMedicineById);
+
+router
+    .route("/:medId/stockInfo")
+    .get(verifyAccessToken, getStockInfo)
 
 router
     .route("/:medId/new-record")

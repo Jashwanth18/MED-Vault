@@ -37,13 +37,19 @@ const createMedicine = asyncHandler(async (req, res) => {
 
 const getMedicineById = asyncHandler(async (req, res) => {
   const medId = req.params.id;
-  const medicine = await Medicine.findById(medId).populate({
-    path: "stockInfo",
-    populate: {
-      path: "updatedBy",
+  const medicine = await Medicine.findById(medId).populate([
+    {
+      path: "createdBy",
       select: "userName -_id",
     },
-  });
+    {
+      path: "stockInfo",
+      populate: {
+        path: "updatedBy",
+        select: "userName -_id",
+      },
+    },
+  ]);
 
   if (!medicine) {
     throw new customApiError(404, "Medicine not found");
@@ -106,10 +112,36 @@ const deleteMedicineById = asyncHandler(async (req, res) => {
     .json(new customApiResponse(200, {}, "Medicine deleted successfully"));
 });
 
-const createExpiryRecord = asyncHandler(async (req, res) => {
-  const recordData = req.body;
+const getStockInfo = asyncHandler(async (req, res) => {
   const medId = req.params.medId;
 
+  const medicine = await Medicine.findById(medId)
+    .select("stockInfo")
+    .populate({
+      path: "stockInfo",
+      populate: {
+        path: "updatedBy",
+        select: "userName -_id",
+      },
+    })
+    .lean();
+
+  if (!medicine || !medicine.stockInfo) {
+    throw new customApiError(404, "Medicine not found");
+  }
+  const stockInfo = medicine.stockInfo;
+  res
+    .status(200)
+    .json(
+      new customApiResponse(200, stockInfo, "stockInfo fetched successfully")
+    );
+});
+
+const createExpiryRecord = asyncHandler(async (req, res) => {
+  const recordData = req.body;
+  console.log(req?.body, "REQBODY");
+  const medId = req.params.medId;
+  console.log(medId);
   const createdExpiryRecord = await ExpiryRecord.create({
     ...recordData,
     medicineId: medId,
@@ -196,6 +228,7 @@ const updateExpiryRecordById = asyncHandler(async (req, res) => {
 const deleteExpiryRecordById = asyncHandler(async (req, res) => {
   const recordId = req.params.recordId;
   const medId = req.params.medId;
+  console.log(recordId, "RECORDID");
 
   const medicine = await Medicine.findByIdAndUpdate(
     medId,
@@ -245,6 +278,7 @@ export {
   createMedicine,
   getMedicineById,
   getAllMedicines,
+  getStockInfo,
   updateMedicineById,
   deleteMedicineById,
   updateExpiryRecordById,
