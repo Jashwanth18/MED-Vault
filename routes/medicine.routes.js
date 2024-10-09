@@ -13,7 +13,7 @@ router
 
 router
     .route("/new-med")
-    .post( verifyAccessToken, isAdmin, upload.single("displayImage"), validateMedicine, createMedicine);
+    .post(verifyAccessToken, isAdmin, upload.single("displayImage"), validateMedicine, createMedicine);
 
 router
     .route("/:id")
