@@ -220,7 +220,7 @@ const updateExpiryRecordById = asyncHandler(async (req, res) => {
       new customApiResponse(
         200,
         { ...updatedExpiryRecord._doc, quantityChange },
-        "Expiry record updated successfully!"
+        "Stock record updated successfully!"
       )
     );
 });
