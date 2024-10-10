@@ -24,6 +24,7 @@
 # IDE and Editor specific files
 **/.idea/
 **/.vscode/
+jsconfig.json
 **/.DS_Store
 **/Thumbs.db
 
